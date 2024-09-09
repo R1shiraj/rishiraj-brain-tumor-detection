@@ -64,6 +64,12 @@ def upload_file_to_s3(file, bucket_name, object_name):
 IMAGE_SIZE = 128
 NUM_CLASSES = 4  # Assuming two classes: Tumor and NoTumor
 
+model_path = "my_model.h5"
+if not os.path.exists(model_path):
+    print(f"Model file {model_path} not found!")
+else:
+    model = load_model(model_path)
+
 # Load the saved weights
 model = load_model("my_model.h5")
 
