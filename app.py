@@ -49,6 +49,8 @@ s3 = boto3.client(
     region_name=os.getenv('AWS_REGION')
 )
 bucket_name = os.getenv('AWS_S3_BUCKET_NAME')
+model_key = 'my_model.h5'  # Replace this with your actual model path in S3
+download_path = 'my_model.h5'  # Local path where the model will be downloaded
 
 def upload_file_to_s3(file, bucket_name, object_name):
     try:
@@ -63,6 +65,14 @@ def upload_file_to_s3(file, bucket_name, object_name):
 # Define constants
 IMAGE_SIZE = 128
 NUM_CLASSES = 4  # Assuming two classes: Tumor and NoTumor
+
+# Function to download model from S3
+def download_model(bucket_name, model_key, download_path):
+    try:
+        s3.download_file(bucket_name, model_key, download_path)
+        print(f"Model downloaded successfully from S3 to {download_path}.")
+    except Exception as e:
+        print(f"Error downloading model: {e}")
 
 # Load the saved weights
 try:
