@@ -64,32 +64,42 @@ def upload_file_to_s3(file, bucket_name, object_name):
 IMAGE_SIZE = 128
 NUM_CLASSES = 4  # Assuming two classes: Tumor and NoTumor
 
-model_path = "my_model.h5"
-if not os.path.exists(model_path):
-    print(f"Model file {model_path} not found!")
-else:
-    model = load_model(model_path)
+# Load the saved weights
+try:
+    model_path = "my_model.h5"
+    if not os.path.exists(model_path):
+        print(f"Model file {model_path} not found!")
+    else:
+        model = load_model(model_path)
+        print("Model loaded successfully.")
+except Exception as e:
+    print(f"Failed to load model: {e}")
 
 # Load the saved weights
 model = load_model("my_model.h5")
 
 # Function to predict on a single image
 def predict_image(image_path, model):
-    # Download the image from the S3 URL
-    response = requests.get(image_path)
-    # Load and preprocess the image
-    img = Image.open(BytesIO(response.content)).convert('RGB')  # Convert to RGB to ensure 3 channels
-    x = np.array(img.resize((IMAGE_SIZE, IMAGE_SIZE)))
+    try:
+        # Download the image from the S3 URL
+        response = requests.get(image_path)
+        print(f"Image download status: {response.status_code}")
+        # Load and preprocess the image
+        img = Image.open(BytesIO(response.content)).convert('RGB')  # Convert to RGB to ensure 3 channels
+        x = np.array(img.resize((IMAGE_SIZE, IMAGE_SIZE)))
 
-    # Ensure the image has the correct shape and channels
-    if len(x.shape) == 2:  # If the image is grayscale, convert it to RGB format
-        x = np.stack((x,) * 3, axis=-1)
-    
-    x = x.reshape(1, IMAGE_SIZE, IMAGE_SIZE, 3)
-    x = x / 255.0  # Normalizing the image
-    # Perform the prediction
-    res = model.predict_on_batch(x)
-    return res
+        # Ensure the image has the correct shape and channels
+        if len(x.shape) == 2:  # If the image is grayscale, convert it to RGB format
+            x = np.stack((x,) * 3, axis=-1)
+        
+        x = x.reshape(1, IMAGE_SIZE, IMAGE_SIZE, 3)
+        x = x / 255.0  # Normalizing the image
+        # Perform the prediction
+        res = model.predict_on_batch(x)
+        return res
+    except Exception as e:
+        print(f"Error during prediction: {e}")
+        return None
     # classification = np.argmax(res, axis=-1)[0]
 
     # # Output the prediction
