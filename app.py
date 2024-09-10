@@ -11,6 +11,10 @@ from flask import Flask, request, render_template, redirect, url_for
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 
+import os
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+import tensorflow as tf
+
 
 import requests
 from io import BytesIO
@@ -74,19 +78,23 @@ def download_model(bucket_name, model_key, download_path):
     except Exception as e:
         print(f"Error downloading model: {e}")
 
-# Load the saved weights
-try:
+# Check if model exists locally; if not, download it
+def load_or_download_model():
     model_path = "my_model.h5"
     if not os.path.exists(model_path):
-        print(f"Model file {model_path} not found!")
-    else:
+        print(f"Model file {model_path} not found. Downloading from S3...")
+        download_model(bucket_name, model_key, model_path)
+    try:
         model = load_model(model_path)
         print("Model loaded successfully.")
-except Exception as e:
-    print(f"Failed to load model: {e}")
+        return model
+    except Exception as e:
+        print(f"Failed to load model: {e}")
+        return None
 
-# Load the saved weights
-model = load_model("my_model.h5")
+# Load the model during app startup
+model = load_or_download_model()
+
 
 # Function to predict on a single image
 def predict_image(image_path, model):
